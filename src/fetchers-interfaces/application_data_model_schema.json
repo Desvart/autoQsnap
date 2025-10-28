@@ -1,0 +1,296 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:mycompany:autoqsnap:schemas:application:v0.1.0",
+  "title": "Application Data model ",
+  "description": "Data model of the 'application' object",
+  "type": "object",
+
+    "$defs": {
+      "datasource": {
+        "description": "The original source of this information.",
+        "type": "string",
+        "enum": [
+          "jira.com",
+          "jira.io",
+          "sonar.io",
+          "product_catalogue",
+          "snapshot_formular"
+        ]
+      },
+      "extractionDate": {
+        "description": "The date at which the data has been extracted from its data source.",
+        "type": "string",
+        "format": "date-time"
+      },
+      "provenanceMetadata": {
+        "description": "Data lineage metadata tracking source and extraction time.",
+        "type": "object",
+        "required": ["datasource", "extractionDate"],
+        "properties": {
+          "datasource": {
+            "$ref": "#/$defs/datasource"
+          },
+          "extractionDate": {
+            "$ref": "#/$defs/extractionDate"
+          }
+        },
+        "additionalProperties": false
+      },
+      "stringWithProvenance": {
+        "description": "A string value with data lineage information.",
+        "type": "object",
+        "required": ["value", "datasource", "extractionDate"],
+        "properties": {
+          "value": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 100,
+            "pattern": "^\\S(.*\\S)?$"
+          },
+          "datasource": {
+            "$ref": "#/$defs/datasource"
+          },
+          "extractionDate": {
+            "$ref": "#/$defs/extractionDate"
+          }
+        },
+        "additionalProperties": false
+      },
+      "booleanWithProvenance": {
+        "description": "A boolean value with data lineage information.",
+        "type": "object",
+        "required": ["value", "datasource", "extractionDate"],
+        "properties": {
+          "value": {
+            "type": "boolean"
+          },
+          "datasource": {
+            "$ref": "#/$defs/datasource"
+          },
+          "extractionDate": {
+            "$ref": "#/$defs/extractionDate"
+          }
+        },
+        "additionalProperties": false
+      },
+      "enumWithProvenance": {
+        "description": "An enumerated value with data lineage information.",
+        "type": "object",
+        "required": ["value", "datasource", "extractionDate"],
+        "properties": {
+          "value": {
+            "type": "string"
+          },
+          "datasource": {
+            "$ref": "#/$defs/datasource"
+          },
+          "extractionDate": {
+            "$ref": "#/$defs/extractionDate"
+          }
+        },
+        "additionalProperties": false
+      }
+    },
+
+    "properties": {
+      "id": {
+        "description": "Unique ID of the object for traceability purpose.",
+        "type": "string",
+        "format": "uuid"
+      },
+      "createdDate": {
+        "description": "The date of creation of the object.",
+        "type": "string",
+        "format": "date-time"
+      },
+      "eacode": {
+        "description": "The unique identifier of the application from the IT system.",
+        "allOf": [
+          {
+            "$ref": "#/$defs/stringWithProvenance"
+          },
+          {
+            "properties": {
+              "value": {
+                "description": "The eacode value.",
+                "maxLength": 10
+              }
+            }
+          }
+        ]
+      },
+      "trigram": {
+        "allOf": [
+          {
+            "$ref": "#/$defs/stringWithProvenance"
+          },
+          {
+            "properties": {
+              "value": {
+                "description": "The trigram value - exactly 3 uppercase letters.",
+                "pattern": "^[A-Z]{3}$",
+                "minLength": 3,
+                "maxLength": 3
+              }
+            }
+          }
+        ]
+      },
+      "name": {
+        "description": "The full name of the application.",
+        "allOf": [
+          {
+            "$ref": "#/$defs/stringWithProvenance"
+          },
+          {
+            "properties": {
+              "value": {
+                "description": "The name value."
+              }
+            }
+          }
+        ]
+      },
+      "manager": {
+        "description": "First name and last name of the product manager.",
+        "allOf": [
+          {
+            "$ref": "#/$defs/stringWithProvenance"
+          },
+          {
+            "properties": {
+              "value": {
+                "description": "The manager value."
+              }
+            }
+          }
+        ]
+      },
+      "owner": {
+        "description": "First name and last name of the product owner.",
+        "allOf": [
+          {
+            "$ref": "#/$defs/stringWithProvenance"
+          },
+          {
+            "properties": {
+              "value": {
+                "description": "The owner value."
+              }
+            }
+          }
+        ]
+      },
+      "unit": {
+        "description": "The team (unit level) managing the application in the organisation.",
+        "allOf": [
+          {
+            "$ref": "#/$defs/stringWithProvenance"
+          },
+          {
+            "properties": {
+              "value": {
+                "description": "The unit name value."
+              }
+            }
+          }
+        ]
+      },
+      "crownJewelsLevel": {
+        "description": "The Crown Jewel category associated to the product.",
+        "allOf": [
+          {
+            "$ref": "#/$defs/enumWithProvenance"
+          },
+          {
+            "properties": {
+              "value": {
+                "description": "The crown jewels category value.",
+                "enum": ["tier-1", "tier-2", "tier-3", "n/a"]
+              }
+            }
+          }
+        ]
+      },
+      "priorityLevel": {
+        "description": "The priority level associated to the product.",
+        "allOf": [
+          {
+            "$ref": "#/$defs/enumWithProvenance"
+          },
+          {
+            "properties": {
+              "value": {
+                "description": "The priority level value.",
+                "enum": ["A0", "A1", "A2", "A3"]
+              }
+            }
+          }
+        ]
+      },
+      "provideEnterpriseServiceFlag": {
+        "description": "Does the product aim at providing enterprise services capabilities?",
+        "$ref": "#/$defs/booleanWithProvenance"
+      },
+      "webExposureFlag": {
+        "description": "Is the product exposed to Internet?",
+        "$ref": "#/$defs/booleanWithProvenance"
+      },
+      "makeOrBuyCategory": {
+        "description": "Is the product an internal development, a bought product or a bought and customised product?",
+        "allOf": [
+          {
+            "$ref": "#/$defs/enumWithProvenance"
+          },
+          {
+            "properties": {
+              "value": {
+                "description": "The make or buy value.",
+                "enum": ["make", "buy", "customised"]
+              }
+            }
+          }
+        ]
+      },
+      "flaggedToBeDeleted": {
+        "description": "Is the product flagged for being decommissioned soon?",
+        "$ref": "#/$defs/booleanWithProvenance"
+      },
+      "sonarQubeProjectIds": {
+        "description": "A list of SonarQube IDs associated with the product.",
+        "type": "array",
+        "items": {
+          "description": "A SonarQube project unique ID with provenance.",
+          "allOf": [
+            {
+              "$ref": "#/$defs/stringWithProvenance"
+            },
+            {
+              "properties": {
+                "value": {
+                  "description": "The SonarQube project unique ID."
+                }
+              }
+            }
+          ]
+        },
+        "uniqueItems": true
+      }
+    },
+  "required": [
+    "id",
+    "createdDate",
+    "eacode",
+    "trigram",
+    "name",
+    "manager",
+    "owner",
+    "crownJewelsLevel",
+    "priorityLevel",
+    "provideEnterpriseServiceFlag",
+    "webExposureFlag",
+    "makeOrBuyCategory",
+    "flaggedToBeDeleted"
+  ],
+  "additionalProperties": false
+}

@@ -1,0 +1,70 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "?",
+  "title": "Product Catalogue ",
+  "description": "A list of items from the product catalogue.",
+  "type": "array",
+  "items": {
+    "type": "object",
+    "properties": {
+      "eacode": {
+        "description": "The unique identifier of the item.",
+        "type": "string",
+        "pattern": "^[A-Z]{2}-\\d{5}$"
+      },
+      "trigram": {
+        "description": "A trigram string associated to an item. Should be unique but exceptions exist.",
+        "type": "string",
+        "pattern": "^[A-Z]{3}$"
+      },
+      "productName": {
+        "description": "The full name of the item.",
+        "type": "string"
+      },
+      "productManager": {
+        "description": "First name and last name of the product manager.",
+        "type": "string"
+      },
+      "productOwner": {
+        "description": "First name and last name of the product owner.",
+        "type": "string"
+      },
+      "crownJewelsLevel": {
+        "description": "The Crown Jewel category associated to the product.",
+        "type": "string",
+        "enum": ["tier-1", "tier-2", "tier-3", "n/a"]
+      },
+      "rtoLevel": {
+        "description": "The RTO category associated to the product.",
+        "enum": ["A0", "A1", "A2", "A3"]
+      },
+      "provideEnterpriseServiceFlag": {
+        "description": "Does the product aims at providing enterprise services capabilities?",
+        "type": "boolean"
+      },
+      "webExposureFlag": {
+        "description": "Is the product exposed to Internet?",
+        "type": "boolean"
+      },
+      "makeOrBuyCategory": {
+        "description": "Is the product an internal development, a bought product or a bought and customised product?",
+        "enum": ["make", "buy", "customise"]
+      },
+      "flaggedToBeDeleted": {
+        "description": "Is the product flagged for being decommissioned soon?",
+        "type": "boolean"
+      },
+      "sonarQubeProjectIds": {
+        "description": "A list of SonarQube ids associated with the product.",
+        "type": "array",
+        "items": {
+          "description": "A SonarQube project unique ids.",
+          "type": "string"
+        }
+      }
+    }
+  },
+  "uniqueItems": true,
+  "required": [ "eacode", "trigram", "productName", "productManager", "productOwner, crownJewelsLevel", "rtoLevel", "provideEnterpriseServiceFlag", "webExposureFlag", "makeOrBuyCategory", "flaggedToBeDeleted"]
+}
+
