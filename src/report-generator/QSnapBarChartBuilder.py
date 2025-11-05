@@ -3,8 +3,6 @@ import plotly.graph_objects as go
 from typing import List, Dict, Optional, Union
 from dataclasses import dataclass
 
-# Todo: add checks to validate that metadata trigram list has the same size as the original data
-
 # Fixme: Fix the callout distance to last column - The distance between the callouts and the right side of the plot should be the shortest possible to avoid reducing the plot functional size
 # Fixme: Fix the callout arrow distance - This distance between the arrow head and the callout should be the lowest possible, without colliding the callout together
 # Fixme: Fix the callout arrow height - It should be the highest value between the middle of the callout and the middle of the corresponding category
@@ -186,6 +184,8 @@ class QSnapBarChartBuilder:
         if self._metadata is None:
             raise ValueError("Metadata must be set before building. Call set_metadata() first.")
 
+        self._validate_trigrams_consistency()
+
         self._figure = self._create_chart()
         return self._figure
 
@@ -245,6 +245,47 @@ class QSnapBarChartBuilder:
             raise ValueError("Metadata must include 'img_name'")
         if not self._metadata.y_label:
             raise ValueError("Metadata must include 'y_label'")
+
+    def _validate_trigrams_consistency(self) -> None:
+        """
+        Validate that trigrams in metadata match the data structure.
+        Checks that trigram counts match the actual values in the data.
+        """
+        if not self._metadata.trigrams:
+            return  # No trigrams to validate
+
+        x_axis = self._get_x_axis()
+
+        for year in self._metadata.trigrams:
+            if year not in x_axis:
+                raise ValueError(
+                    f"Trigram year '{year}' not found in data columns. "
+                    f"Available years: {x_axis}"
+                )
+
+            for category, trigram_list in self._metadata.trigrams[year].items():
+                # Check if category exists in data
+                if category not in self._original_data_frame['Category'].values:
+                    raise ValueError(
+                        f"Trigram category '{category}' not found in data. "
+                        f"Available categories: {self._original_data_frame['Category'].tolist()}"
+                    )
+
+                # Get the actual count for this category and year
+                actual_count = int(
+                    self._original_data_frame[
+                        self._original_data_frame['Category'] == category
+                        ][year].values[0]
+                )
+
+                # Check if trigram list size matches the actual count
+                trigram_count = len(trigram_list)
+                if trigram_count != actual_count:
+                    raise ValueError(
+                        f"Trigram count mismatch for {category} in {year}: "
+                        f"Expected {actual_count} trigrams but got {trigram_count}. "
+                        f"Trigrams provided: {trigram_list}"
+                    )
 
     # ========== CHART CREATION METHODS ==========
 
