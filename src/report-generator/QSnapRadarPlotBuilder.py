@@ -176,15 +176,19 @@ class QSnapRadarPlotBuilder:
                     curr_val = current_year_values[i]
                     diff = curr_val - prev_val
 
-                    if diff > self.TREND_ERROR_MARGIN:
-                        # Improved: green
-                        marker_colors.append('green')
-                    elif diff < -self.TREND_ERROR_MARGIN:
-                        # Degraded: red
-                        marker_colors.append('red')
+                    if pd.isna(prev_val) or pd.isna(curr_val):
+                        # If current value exists but previous doesn't, use blue (no comparison possible)
+                        marker_colors.append('rgb(30, 144, 255)')
                     else:
-                        # Stable (within error margin): blue
-                        marker_colors.append('grey')
+                        if diff > self.TREND_ERROR_MARGIN:
+                            # Improved: green
+                            marker_colors.append('green')
+                        elif diff < -self.TREND_ERROR_MARGIN:
+                            # Degraded: red
+                            marker_colors.append('red')
+                        else:
+                            # Stable (within error margin): blue
+                            marker_colors.append('grey')
 
                 # Add the first color again to close the loop
                 marker_colors_closed = marker_colors + [marker_colors[0]]
@@ -204,7 +208,8 @@ class QSnapRadarPlotBuilder:
                         color=marker_colors_closed,
                         line=dict(width=1, color='white')
                     ),
-                    name=year
+                    name=year,
+                    connectgaps=False
                 ))
 
         return fig
@@ -304,7 +309,7 @@ if __name__ == "__main__":
                      'Unit coverage', 'Automation practices'],
         '2022': [0.68, 0.48, 0.79, 0.98, 1.00, 0.57, 0.00, 0.62, 0.37, 0.97],
         '2023': [0.48, 0.58, 0.89, 0.88, 0.60, 0.77, 0.40, 0.82, 0.17, 0.07],
-        '2024': [0.18, 0.58, 0.79, 0.78, 0.80, 0.67, 0.20, 0.42, 0.77, 0.47],
+        '2024': [None, 0.58, 0.79, 0.78, 0.80, 0.67, 0.20, 0.42, 0.77, 0.47],
         '2025': [0.28, 0.68, 0.84, 0.90, 0.70, 0.47, 0.10, 0.62, 0.37, 0.97]
     }
 
