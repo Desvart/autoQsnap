@@ -2,7 +2,10 @@ import pandas as pd
 import plotly.graph_objects as go
 from dataclasses import dataclass
 from typing import Optional, Union, Dict, List
-
+import numpy as np
+from PIL import Image
+import io
+import base64
 
 @dataclass
 class ChartMetadata:
@@ -135,14 +138,44 @@ class QSnapRadarPlotBuilder:
     def _add_radars(self, years: List[str], categories: List[str]) -> go.Figure:
         fig = go.Figure()
 
-        for i in years[2::1]:
-            value = self._data_frame[i].tolist()
-            fig.add_trace(go.Scatterpolar(
-                r=value,
-                theta=categories,
-                fill='toself',
-                name=i
-            ))
+        last_two_years = years[-2:] if len(years) >= 2 else years
+
+        for idx, year in enumerate(last_two_years):
+            value = self._data_frame[year].tolist()
+
+            # Close the loop by adding the first value at the end
+            value_closed = value + [value[0]]
+            categories_closed = categories + [categories[0]]
+
+            # First of last two years (second-to-last): Transparent fill with grey dotted line
+            if idx == 0:
+                fig.add_trace(go.Scatterpolar(
+                    r=value_closed,
+                    theta=categories_closed,
+                    fill='toself',
+                    fillcolor='rgba(0, 0, 0, 0)',  # Fully transparent
+                    line=dict(
+                        color='grey',
+                        dash='dot',
+                        width=2
+                    ),
+                    name=year
+                ))
+            # Second of last two years (most recent): Light blue partially transparent fill with blue solid line
+            elif idx == 1:
+                fig.add_trace(go.Scatterpolar(
+                    r=value_closed,
+                    theta=categories_closed,
+                    fill='toself',
+                    fillcolor='rgba(135, 206, 250, 0.4)',  # Light blue with 40% opacity
+                    line=dict(
+                        color='rgb(30, 144, 255)',  # Blue
+                        dash='solid',
+                        width=2
+                    ),
+                    name=year
+                ))
+
         return fig
 
 
@@ -151,16 +184,34 @@ class QSnapRadarPlotBuilder:
             polar=dict(
                 radialaxis=dict(
                     visible=True,
-                    range=[0, 1]
+                    range=[0, 1],
+                    tickvals=[0, 0.25, 0.5, 0.75, 1],
+                    ticktext=['0', '0.25', '0.5', '0.75', '1']
                 ),
                 angularaxis = dict(
                     rotation=90, # start position of angular axis
                     direction="clockwise"
-                )
+                ),
+                bgcolor='rgba(0,0,0,0)'
             ),
             showlegend=True,
             plot_bgcolor='white',
             hovermode=False,
+            images=[
+                dict(
+                    source=self._create_radial_gradient_image(),
+                    xref="paper",
+                    yref="paper",
+                    x=0.5,
+                    y=0.5,
+                    sizex=1,
+                    sizey=1,
+                    xanchor="center",
+                    yanchor="middle",
+                    layer="below",
+                    opacity=0.33
+                )
+            ]
         )
 
         return fig
@@ -173,6 +224,44 @@ class QSnapRadarPlotBuilder:
 
     def _get_y_axis(self) -> List[str]:
         return self._data_frame['Category'].tolist()
+
+    def _create_radial_gradient_image(self) -> str:
+        size = 500
+        center = size // 2
+
+        # Create image array with alpha channel for transparency
+        img_array = np.zeros((size, size, 4), dtype=np.uint8)
+
+        # Generate radial gradient
+        for y in range(size):
+            for x in range(size):
+                # Calculate distance from center (normalized to 0-1)
+                dx = x - center
+                dy = y - center
+                distance = np.sqrt(dx**2 + dy**2)
+                normalized_dist = distance / center
+
+                # Only draw within circle (radius = center)
+                if normalized_dist <= 1.0:
+                    # Interpolate from light red to light green
+                    red = int(255 * (1 - normalized_dist))
+                    green = int(255 * normalized_dist)
+
+                    img_array[y, x] = [red, green, 0, 200]  # RGB + Alpha (200 for semi-transparency)
+                else:
+                    # Outside circle is fully transparent
+                    img_array[y, x] = [0, 0, 0, 0]
+
+        # Convert to PIL Image with alpha channel
+        img = Image.fromarray(img_array, mode='RGBA')
+
+        # Convert to base64 string for plotly
+        buffer = io.BytesIO()
+        img.save(buffer, format='PNG')
+        buffer.seek(0)
+        img_base64 = base64.b64encode(buffer.read()).decode()
+
+        return f"data:image/png;base64,{img_base64}"
 
 # ========== EXAMPLE USAGE ==========
 
