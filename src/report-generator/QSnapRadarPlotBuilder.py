@@ -19,6 +19,9 @@ class QSnapRadarPlotBuilder:
     DEFAULT_IMAGE_HEIGHT = 600
     DEFAULT_IMAGE_SCALE = 2
 
+    # Error margin for trend detection
+    TREND_ERROR_MARGIN = 0.05  # 5% error margin
+
     def __init__(self):
         self._data_frame: Optional[pd.DataFrame] = None
         self._original_data_frame: Optional[pd.DataFrame] = None
@@ -163,6 +166,29 @@ class QSnapRadarPlotBuilder:
                 ))
             # Second of last two years (most recent): Light blue partially transparent fill with blue solid line
             elif idx == 1:
+                # Calculate marker colors based on trend
+                previous_year_values = self._data_frame[last_two_years[0]].tolist()
+                current_year_values = value
+                marker_colors = []
+
+                for i, category in enumerate(categories):
+                    prev_val = previous_year_values[i]
+                    curr_val = current_year_values[i]
+                    diff = curr_val - prev_val
+
+                    if diff > self.TREND_ERROR_MARGIN:
+                        # Improved: green
+                        marker_colors.append('green')
+                    elif diff < -self.TREND_ERROR_MARGIN:
+                        # Degraded: red
+                        marker_colors.append('red')
+                    else:
+                        # Stable (within error margin): blue
+                        marker_colors.append('grey')
+
+                # Add the first color again to close the loop
+                marker_colors_closed = marker_colors + [marker_colors[0]]
+
                 fig.add_trace(go.Scatterpolar(
                     r=value_closed,
                     theta=categories_closed,
@@ -172,6 +198,11 @@ class QSnapRadarPlotBuilder:
                         color='rgb(30, 144, 255)',  # Blue
                         dash='solid',
                         width=2
+                    ),
+                    marker=dict(
+                        size=8,
+                        color=marker_colors_closed,
+                        line=dict(width=1, color='white')
                     ),
                     name=year
                 ))
